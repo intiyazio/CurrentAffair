@@ -2,10 +2,8 @@ import React, { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
+  TextField,
+  Autocomplete,
   Button,
   Chip,
   ToggleButtonGroup,
@@ -36,6 +34,16 @@ interface NewsFeedProps {
   sourcesList: string[];
 }
 
+interface GSPaperOption {
+  code: string;
+  label: string;
+}
+
+interface TimeframeOption {
+  value: TimeframeFilter;
+  label: string;
+}
+
 const PAGE_SIZE = 12;
 
 export const NewsFeed: React.FC<NewsFeedProps> = ({
@@ -52,6 +60,50 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
   const [displayCount, setDisplayCount] = useState<number>(PAGE_SIZE);
+
+  // 1. Category Options
+  const categoryOptions = useMemo(() => {
+    return ['All Categories', ...UPSC_CATEGORIES];
+  }, []);
+
+  const selectedCategoryValue =
+    filters.category === 'All' ? 'All Categories' : filters.category;
+
+  // 2. GS Paper Options
+  const gsPaperOptions: GSPaperOption[] = useMemo(() => {
+    return [
+      { code: 'All', label: 'All GS Papers' },
+      ...GS_PAPERS.map((p) => ({
+        code: p.code,
+        label: `${p.code} – ${p.shortDesc.split(',')[0].trim()}`,
+      })),
+    ];
+  }, []);
+
+  const selectedGSPaperOption =
+    gsPaperOptions.find((p) => p.code === filters.gsPaper) || gsPaperOptions[0];
+
+  // 3. Source Options
+  const sourceOptions = useMemo(() => {
+    return ['All Sources', ...sourcesList];
+  }, [sourcesList]);
+
+  const selectedSourceValue =
+    filters.source === 'All' ? 'All Sources' : filters.source;
+
+  // 4. Timeframe Options
+  const timeframeOptions: TimeframeOption[] = useMemo(() => {
+    return [
+      { value: 'all', label: 'All Available (30 Days)' },
+      { value: 'today', label: "Today's News Only" },
+      { value: '3days', label: 'Past 3 Days' },
+      { value: '7days', label: 'Past 7 Days' },
+      { value: 'month', label: 'Past 30 Days' },
+    ];
+  }, []);
+
+  const selectedTimeframeOption =
+    timeframeOptions.find((t) => t.value === filters.timeframe) || timeframeOptions[0];
 
   // Filter articles memoized
   const filteredArticles = useMemo(() => {
@@ -99,7 +151,7 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
         </Typography>
       </Box>
 
-      {/* Filter Control Bar */}
+      {/* Filter Control Bar with Autocomplete Dropdowns */}
       <Paper
         elevation={0}
         sx={{
@@ -115,7 +167,7 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
           <SearchBar
             value={filters.searchQuery}
             onChange={(q) => onFilterChange((prev) => ({ ...prev, searchQuery: q }))}
-            placeholder="Search within current affairs feed..."
+            placeholder="Search keywords, headlines, schemes, judicial rulings..."
           />
         </Box>
 
@@ -131,87 +183,95 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
             mb: 2,
           }}
         >
-          {/* 1. Category Dropdown */}
-          <FormControl size="small" fullWidth>
-            <InputLabel id="category-filter-label">UPSC Category</InputLabel>
-            <Select
-              labelId="category-filter-label"
-              value={filters.category}
-              label="UPSC Category"
-              onChange={(e) =>
-                onFilterChange((prev) => ({ ...prev, category: e.target.value }))
-              }
-            >
-              <MenuItem value="All">All Categories</MenuItem>
-              {UPSC_CATEGORIES.map((cat) => (
-                <MenuItem key={cat} value={cat}>
-                  {cat}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          {/* 1. Category Autocomplete Searchable Dropdown */}
+          <Autocomplete
+            size="small"
+            autoHighlight
+            options={categoryOptions}
+            value={selectedCategoryValue}
+            onChange={(_event, newValue) => {
+              onFilterChange((prev) => ({
+                ...prev,
+                category: !newValue || newValue === 'All Categories' ? 'All' : newValue,
+              }));
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="UPSC Category"
+                placeholder="Type to search category..."
+              />
+            )}
+            isOptionEqualToValue={(option, value) => option === value}
+          />
 
-          {/* 2. GS Paper Dropdown */}
-          <FormControl size="small" fullWidth>
-            <InputLabel id="gs-filter-label">GS Paper</InputLabel>
-            <Select
-              labelId="gs-filter-label"
-              value={filters.gsPaper}
-              label="GS Paper"
-              onChange={(e) =>
-                onFilterChange((prev) => ({ ...prev, gsPaper: e.target.value }))
-              }
-            >
-              <MenuItem value="All">All GS Papers</MenuItem>
-              {GS_PAPERS.map((paper) => (
-                <MenuItem key={paper.code} value={paper.code}>
-                  {paper.code}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          {/* 2. GS Paper Autocomplete Searchable Dropdown */}
+          <Autocomplete
+            size="small"
+            autoHighlight
+            options={gsPaperOptions}
+            getOptionLabel={(option) => option.label}
+            value={selectedGSPaperOption}
+            onChange={(_event, newValue) => {
+              onFilterChange((prev) => ({
+                ...prev,
+                gsPaper: newValue ? newValue.code : 'All',
+              }));
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="GS Paper"
+                placeholder="Type to search paper..."
+              />
+            )}
+            isOptionEqualToValue={(option, value) => option.code === value.code}
+          />
 
-          {/* 3. Source Dropdown */}
-          <FormControl size="small" fullWidth>
-            <InputLabel id="source-filter-label">News Source</InputLabel>
-            <Select
-              labelId="source-filter-label"
-              value={filters.source}
-              label="News Source"
-              onChange={(e) =>
-                onFilterChange((prev) => ({ ...prev, source: e.target.value }))
-              }
-            >
-              <MenuItem value="All">All Official & Media Sources</MenuItem>
-              {sourcesList.map((src) => (
-                <MenuItem key={src} value={src}>
-                  {src}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          {/* 3. Source Autocomplete Searchable Dropdown */}
+          <Autocomplete
+            size="small"
+            autoHighlight
+            options={sourceOptions}
+            value={selectedSourceValue}
+            onChange={(_event, newValue) => {
+              onFilterChange((prev) => ({
+                ...prev,
+                source: !newValue || newValue === 'All Sources' ? 'All' : newValue,
+              }));
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="News Source"
+                placeholder="Type to search source..."
+              />
+            )}
+            isOptionEqualToValue={(option, value) => option === value}
+          />
 
-          {/* 4. Timeframe Dropdown */}
-          <FormControl size="small" fullWidth>
-            <InputLabel id="time-filter-label">Timeframe</InputLabel>
-            <Select
-              labelId="time-filter-label"
-              value={filters.timeframe}
-              label="Timeframe"
-              onChange={(e) =>
-                onFilterChange((prev) => ({
-                  ...prev,
-                  timeframe: e.target.value as TimeframeFilter,
-                }))
-              }
-            >
-              <MenuItem value="all">All Available (30 Days)</MenuItem>
-              <MenuItem value="today">Today's News Only</MenuItem>
-              <MenuItem value="3days">Past 3 Days</MenuItem>
-              <MenuItem value="7days">Past 7 Days</MenuItem>
-              <MenuItem value="month">Past 30 Days</MenuItem>
-            </Select>
-          </FormControl>
+          {/* 4. Timeframe Autocomplete Searchable Dropdown */}
+          <Autocomplete
+            size="small"
+            autoHighlight
+            options={timeframeOptions}
+            getOptionLabel={(option) => option.label}
+            value={selectedTimeframeOption}
+            onChange={(_event, newValue) => {
+              onFilterChange((prev) => ({
+                ...prev,
+                timeframe: newValue ? newValue.value : 'all',
+              }));
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Timeframe"
+                placeholder="Type to search timeframe..."
+              />
+            )}
+            isOptionEqualToValue={(option, value) => option.value === value.value}
+          />
         </Box>
 
         {/* Second Row: Prelims/Mains Toggle + Clear Filters */}
@@ -309,6 +369,15 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
             label={`Paper: ${filters.gsPaper}`}
             size="small"
             onDelete={() => onFilterChange((prev) => ({ ...prev, gsPaper: 'All' }))}
+            sx={{ fontWeight: 600 }}
+          />
+        )}
+
+        {filters.source !== 'All' && (
+          <Chip
+            label={`Source: ${filters.source}`}
+            size="small"
+            onDelete={() => onFilterChange((prev) => ({ ...prev, source: 'All' }))}
             sx={{ fontWeight: 600 }}
           />
         )}
