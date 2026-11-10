@@ -1,0 +1,58 @@
+name: Update Current Affairs Data
+
+on:
+  schedule:
+    # Runs every 6 hours (at 00:00, 06:00, 12:00, 18:00 UTC)
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions UI
+
+permissions:
+  contents: write
+
+jobs:
+  update-news:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install feedparser requests beautifulsoup4
+
+      - name: Fetch and process current affairs
+        run: |
+          python scripts/fetch_news.py
+
+      - name: Validate JSON Output
+        run: |
+          python -c "
+          import json
+          with open('public/data/current-affairs.json', 'r', encoding='utf-8') as f:
+              data = json.load(f)
+              assert 'articles' in data, 'Missing articles array'
+              assert len(data['articles']) > 0, 'No articles collected'
+              print(f'JSON validated successfully! {len(data[\"articles\"])} articles.')
+          "
+
+      - name: Commit and push changes if data changed
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/current-affairs.json
+          # Only commit if there are differences
+          if git diff --staged --quiet; then
+              echo "No new updates to commit."
+          else
+              git commit -m "chore(data): auto-update UPSC current affairs [skip ci]"
+              git push
+          fi
