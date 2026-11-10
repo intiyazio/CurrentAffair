@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { UPSC_CATEGORIES } from '../utils/filterUtils';
 import type { CurrentAffair } from '../types/news';
+import { useLanguage } from '../context/LanguageContext';
 
 interface CategoryFiltersProps {
   selectedCategory: string;
@@ -36,6 +37,7 @@ export const CategoryFilters: React.FC<CategoryFiltersProps> = ({
 }) => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const { t, translateCategory } = useLanguage();
 
   // Compute category counts
   const categoryCounts = React.useMemo(() => {
@@ -71,10 +73,10 @@ export const CategoryFilters: React.FC<CategoryFiltersProps> = ({
       <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
-            UPSC Syllabus Categories
+            {t('categoriesTitle')}
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Filter articles by specific topics prescribed in the Civil Services Examination syllabus.
+            {t('categoriesSubtitle')}
           </Typography>
         </Box>
       </Box>
@@ -90,7 +92,7 @@ export const CategoryFilters: React.FC<CategoryFiltersProps> = ({
         {/* All Categories Option */}
         <Chip
           icon={<LayoutGrid size={15} />}
-          label={`All Categories (${articles.length})`}
+          label={`${t('allCategories')} (${articles.length})`}
           clickable
           onClick={() => onSelectCategory('All')}
           sx={{
@@ -126,7 +128,7 @@ export const CategoryFilters: React.FC<CategoryFiltersProps> = ({
             <Chip
               key={cat}
               icon={categoryIcons[cat]}
-              label={`${cat} (${count})`}
+              label={`${translateCategory(cat)} (${count})`}
               clickable
               onClick={() => onSelectCategory(isSelected ? 'All' : cat)}
               sx={{

@@ -28,7 +28,9 @@ import {
   Layers,
   GraduationCap,
   Info,
+  Languages,
 } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface HeaderProps {
   mode: 'light' | 'dark';
@@ -48,14 +50,15 @@ export const Header: React.FC<HeaderProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { language, toggleLanguage, t } = useLanguage();
 
   const navItems = [
-    { id: 'home', label: 'Home', icon: Compass },
-    { id: 'today', label: "Today's Highlights", icon: Newspaper },
-    { id: 'feed', label: 'All News', icon: Layers },
-    { id: 'categories', label: 'Categories', icon: GraduationCap },
-    { id: 'saved', label: 'Saved Articles', icon: Bookmark, badge: bookmarkCount },
-    { id: 'about', label: 'About & Sources', icon: Info },
+    { id: 'home', label: t('navHome'), icon: Compass },
+    { id: 'today', label: t('navHighlights'), icon: Newspaper },
+    { id: 'feed', label: t('navAllNews'), icon: Layers },
+    { id: 'categories', label: t('navCategories'), icon: GraduationCap },
+    { id: 'saved', label: t('navSaved'), icon: Bookmark, badge: bookmarkCount },
+    { id: 'about', label: t('navAbout'), icon: Info },
   ];
 
   const handleNavClick = (id: string) => {
@@ -119,7 +122,7 @@ export const Header: React.FC<HeaderProps> = ({
                   lineHeight: 1.15,
                 }}
               >
-                UPSC Current Affairs
+                {t('brandName')}
               </Typography>
               <Typography
                 variant="caption"
@@ -130,14 +133,14 @@ export const Header: React.FC<HeaderProps> = ({
                   letterSpacing: '0.02em',
                 }}
               >
-                Understand Today. Prepare for Tomorrow.
+                {t('tagline')}
               </Typography>
             </Box>
           </Box>
 
           {/* Desktop Navigation */}
           {!isMobile && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
               {navItems.map((item) => {
                 const IconComponent = item.icon;
                 const isActive = activeTab === item.id;
@@ -159,10 +162,10 @@ export const Header: React.FC<HeaderProps> = ({
                       )
                     }
                     sx={{
-                      px: 1.8,
+                      px: 1.6,
                       py: 0.8,
                       borderRadius: '8px',
-                      fontSize: '0.88rem',
+                      fontSize: '0.86rem',
                       fontWeight: isActive ? 700 : 500,
                       color: isActive
                         ? '#01484a'
@@ -186,14 +189,41 @@ export const Header: React.FC<HeaderProps> = ({
             </Box>
           )}
 
-          {/* Action Icons (Theme toggle + Mobile menu button) */}
+          {/* Action Icons (Language switcher + Theme toggle + Mobile menu button) */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {/* Language Switcher Pill */}
+            <Tooltip title={language === 'en' ? 'हिन्दी में बदलें (Switch to Hindi)' : 'Switch to English'}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={toggleLanguage}
+                startIcon={<Languages size={15} />}
+                sx={{
+                  borderRadius: 2,
+                  px: 1.5,
+                  py: 0.6,
+                  fontWeight: 700,
+                  fontSize: '0.82rem',
+                  borderColor: theme.palette.divider,
+                  color: mode === 'light' ? '#01484a' : '#2dd4bf',
+                  backgroundColor: mode === 'light' ? 'rgba(1, 72, 74, 0.04)' : 'rgba(255, 255, 255, 0.05)',
+                  '&:hover': {
+                    borderColor: '#01484a',
+                    backgroundColor: mode === 'light' ? 'rgba(1, 72, 74, 0.08)' : 'rgba(255, 255, 255, 0.1)',
+                  },
+                }}
+              >
+                {language === 'en' ? 'हिन्दी' : 'English'}
+              </Button>
+            </Tooltip>
+
+            {/* Theme Toggle */}
             <Tooltip title={mode === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}>
               <IconButton
                 onClick={onToggleTheme}
                 sx={{
                   border: `1px solid ${theme.palette.divider}`,
-                  p: 1,
+                  p: 0.9,
                   color: mode === 'light' ? '#01484a' : '#f59e0b',
                 }}
               >
@@ -206,7 +236,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={() => setMobileOpen(true)}
                 sx={{
                   border: `1px solid ${theme.palette.divider}`,
-                  p: 1,
+                  p: 0.9,
                   color: 'text.primary',
                 }}
                 aria-label="Open navigation menu"
@@ -235,12 +265,32 @@ export const Header: React.FC<HeaderProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <GraduationCap size={20} color="#01484a" />
             <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-              Navigation
+              {t('navMenu')}
             </Typography>
           </Box>
           <IconButton onClick={() => setMobileOpen(false)}>
             <CloseIcon size={20} />
           </IconButton>
+        </Box>
+
+        {/* Mobile Language Switcher */}
+        <Box sx={{ mb: 2, px: 1 }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            size="small"
+            onClick={toggleLanguage}
+            startIcon={<Languages size={16} />}
+            sx={{
+              py: 0.8,
+              fontWeight: 700,
+              borderRadius: 2,
+              borderColor: '#01484a',
+              color: '#01484a',
+            }}
+          >
+            {language === 'en' ? 'हिन्दी में बदलें (Hindi)' : 'Switch to English'}
+          </Button>
         </Box>
 
         <List>

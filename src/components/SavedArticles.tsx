@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import type { CurrentAffair } from '../types/news';
 import { NewsCard } from './NewsCard';
+import { useLanguage } from '../context/LanguageContext';
 
 interface SavedArticlesProps {
   savedArticles: CurrentAffair[];
@@ -37,6 +38,7 @@ export const SavedArticles: React.FC<SavedArticlesProps> = ({
 }) => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const { t } = useLanguage();
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
   const handleExport = () => {
@@ -82,11 +84,11 @@ export const SavedArticles: React.FC<SavedArticlesProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#d97706', mb: 0.5 }}>
             <Bookmark size={22} />
             <Typography variant="h4" sx={{ fontWeight: 800 }}>
-              Saved Current Affairs ({savedArticles.length})
+              {t('savedTitle')} ({savedArticles.length})
             </Typography>
           </Box>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Your personal revision repository stored locally in your browser. No sign-up required.
+            {t('savedSubtitle')}
           </Typography>
         </Box>
 
@@ -99,7 +101,7 @@ export const SavedArticles: React.FC<SavedArticlesProps> = ({
               onClick={handleExport}
               sx={{ borderRadius: 2 }}
             >
-              Export Notes (.JSON)
+              {t('exportNotes')}
             </Button>
 
             <Button
@@ -110,7 +112,7 @@ export const SavedArticles: React.FC<SavedArticlesProps> = ({
               onClick={() => setConfirmClearOpen(true)}
               sx={{ borderRadius: 2 }}
             >
-              Clear All
+              {t('clearAll')}
             </Button>
           </Box>
         )}
@@ -148,11 +150,10 @@ export const SavedArticles: React.FC<SavedArticlesProps> = ({
             <Bookmark size={26} />
           </Box>
           <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-            No Saved Articles Yet
+            {t('noSavedArticles')}
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3, lineHeight: 1.6 }}>
-            Click the bookmark icon on any news card while studying to save key developments,
-            government schemes, and landmark judgments for your Prelims and Mains revision.
+            {t('noSavedDesc')}
           </Typography>
           <Button
             variant="contained"
@@ -160,7 +161,7 @@ export const SavedArticles: React.FC<SavedArticlesProps> = ({
             endIcon={<ArrowRight size={16} />}
             sx={{ borderRadius: 2.5, px: 3, py: 1 }}
           >
-            Browse Today's Current Affairs
+            {t('browseCurrentAffairs')}
           </Button>
         </Paper>
       ) : (
@@ -190,15 +191,14 @@ export const SavedArticles: React.FC<SavedArticlesProps> = ({
         onClose={() => setConfirmClearOpen(false)}
         aria-labelledby="clear-dialog-title"
       >
-        <DialogTitle id="clear-dialog-title">Clear all saved articles?</DialogTitle>
+        <DialogTitle id="clear-dialog-title">{t('confirmClearTitle')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            This action will remove all {savedArticles.length} bookmarked articles from your browser's
-            local storage. This cannot be undone.
+            {t('confirmClearDesc')}
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setConfirmClearOpen(false)}>Cancel</Button>
+          <Button onClick={() => setConfirmClearOpen(false)}>{t('cancel')}</Button>
           <Button
             onClick={() => {
               onClearBookmarks();
@@ -207,7 +207,7 @@ export const SavedArticles: React.FC<SavedArticlesProps> = ({
             color="error"
             variant="contained"
           >
-            Clear All
+            {t('clearAll')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -30,6 +30,7 @@ import {
 import type { CurrentAffair } from '../types/news';
 import { formatArticleDate } from '../utils/dateUtils';
 import { GS_PAPERS } from '../utils/filterUtils';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ArticleDetailsProps {
   article: CurrentAffair | null;
@@ -49,23 +50,27 @@ export const ArticleDetails: React.FC<ArticleDetailsProps> = ({
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const isLight = theme.palette.mode === 'light';
+  const { language, t, translateCategory, translateGSPaper, translateGSPaperDesc, translateSource } = useLanguage();
 
   const [copied, setCopied] = useState(false);
 
   if (!article) return null;
 
+  const displayTitle = (language === 'hi' && article.titleHi) ? article.titleHi : article.title;
+  const displayDescription = (language === 'hi' && article.descriptionHi) ? article.descriptionHi : article.description;
+
   const handleShare = () => {
     if (navigator.clipboard) {
       navigator.clipboard.writeText(
-        `${article.title}\n\nRead original: ${article.sourceUrl}\n(Via UPSC Current Affairs)`
+        `${displayTitle}\n\nRead original: ${article.sourceUrl}\n(Via UPSC Current Affairs)`
       );
       setCopied(true);
       setTimeout(() => setCopied(false), 3000);
     }
   };
 
-  const getGSPaperDetails = (code: string) => {
-    return GS_PAPERS.find((p) => p.code === code);
+  const getGSPaperColor = (code: string) => {
+    return GS_PAPERS.find((p) => p.code === code)?.color || '#01484a';
   };
 
   return (
@@ -115,7 +120,7 @@ export const ArticleDetails: React.FC<ArticleDetailsProps> = ({
               }}
             >
               <Building2 size={16} />
-              <span>{article.source}</span>
+              <span>{translateSource(article.source)}</span>
             </Box>
 
             <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.6, color: 'text.secondary', fontSize: '0.8rem' }}>
@@ -126,13 +131,13 @@ export const ArticleDetails: React.FC<ArticleDetailsProps> = ({
 
           {/* Action Icons */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Tooltip title={copied ? 'Copied link!' : 'Share / Copy'}>
+            <Tooltip title={copied ? t('shareSuccess') : 'Share / Copy'}>
               <IconButton size="small" onClick={handleShare} sx={{ p: 1 }}>
                 {copied ? <Check size={18} color="#059669" /> : <Share2 size={18} />}
               </IconButton>
             </Tooltip>
 
-            <Tooltip title={isBookmarked ? 'Remove Bookmark' : 'Save for Revision'}>
+            <Tooltip title={isBookmarked ? t('removeBookmarkTooltip') : t('saveArticleTooltip')}>
               <IconButton
                 size="small"
                 onClick={() => onToggleBookmark(article)}
@@ -166,7 +171,7 @@ export const ArticleDetails: React.FC<ArticleDetailsProps> = ({
               mb: 2.5,
             }}
           >
-            {article.title}
+            {displayTitle}
           </Typography>
 
           {/* Source Excerpt Banner */}
@@ -183,7 +188,7 @@ export const ArticleDetails: React.FC<ArticleDetailsProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#01484a', mb: 1 }}>
               <ShieldCheck size={16} />
               <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Verified Source Communiqué
+                {t('verifiedSourceCommunique')}
               </Typography>
             </Box>
 
@@ -195,7 +200,7 @@ export const ArticleDetails: React.FC<ArticleDetailsProps> = ({
                 fontSize: '1rem',
               }}
             >
-              {article.description}
+              {displayDescription}
             </Typography>
 
             <Box sx={{ mt: 2, pt: 1.5, borderTop: `1px dashed ${theme.palette.divider}` }}>
@@ -213,7 +218,7 @@ export const ArticleDetails: React.FC<ArticleDetailsProps> = ({
                   fontWeight: 600,
                 }}
               >
-                Read Complete Report at {article.source}
+                {t('readCompleteReport')} {translateSource(article.source)}
               </Button>
             </Box>
           </Paper>
@@ -223,13 +228,12 @@ export const ArticleDetails: React.FC<ArticleDetailsProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
               <Sparkles size={18} color="#d97706" />
               <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem' }}>
-                UPSC Syllabus Classification & Relevance
+                {t('syllabusClassification')}
               </Typography>
             </Box>
 
             <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', mb: 2 }}>
-              Classification derived objectively from article topic metadata and the official UPSC Civil
-              Services Examination syllabus.
+              {t('syllabusNote')}
             </Typography>
 
             {/* Category & GS Papers */}
@@ -245,10 +249,10 @@ export const ArticleDetails: React.FC<ArticleDetailsProps> = ({
                 }}
               >
                 <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.5 }}>
-                  Primary Category
+                  {t('primaryCategory')}
                 </Typography>
                 <Chip
-                  label={article.category}
+                  label={translateCategory(article.category)}
                   sx={{
                     fontWeight: 700,
                     backgroundColor: isLight ? 'rgba(1, 72, 74, 0.1)' : 'rgba(45, 212, 191, 0.15)',
@@ -268,19 +272,19 @@ export const ArticleDetails: React.FC<ArticleDetailsProps> = ({
                 }}
               >
                 <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 0.5 }}>
-                  Exam Stage Relevance
+                  {t('examStageRelevance')}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   {article.prelimsRelevant && (
                     <Chip
-                      label="Prelims High-Yield"
+                      label={t('prelimsHighYield')}
                       size="small"
                       sx={{ backgroundColor: '#0284c718', color: '#0284c7', fontWeight: 600 }}
                     />
                   )}
                   {article.mainsRelevant && (
                     <Chip
-                      label="Mains Analytical"
+                      label={t('mainsAnalytical')}
                       size="small"
                       sx={{ backgroundColor: '#d9770618', color: '#d97706', fontWeight: 600 }}
                     />
@@ -292,31 +296,34 @@ export const ArticleDetails: React.FC<ArticleDetailsProps> = ({
             {/* GS Papers Detail */}
             <Box sx={{ mb: 2.5 }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-                General Studies (GS) Paper Linkages:
+                {t('gsLinkages')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
                 {article.gsPaper.map((paperCode) => {
-                  const info = getGSPaperDetails(paperCode);
+                  const color = getGSPaperColor(paperCode);
+                  const translatedTitle = translateGSPaper(paperCode);
+                  const translatedDesc = translateGSPaperDesc(paperCode);
+
                   return (
                     <Box
                       key={paperCode}
                       sx={{
                         p: 1.5,
                         borderRadius: 2,
-                        backgroundColor: `${info?.color || '#01484a'}0d`,
-                        border: `1px solid ${info?.color || '#01484a'}2b`,
+                        backgroundColor: `${color}0d`,
+                        border: `1px solid ${color}2b`,
                       }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: info?.color || '#01484a' }}>
-                          {paperCode}
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: color }}>
+                          {translatedTitle}
                         </Typography>
                         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          — {info?.title || ''}
+                          — {translatedDesc}
                         </Typography>
                       </Box>
                       <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                        Key Areas: {info?.topics.join(' • ')}
+                        {t('keyAreas')} {translatedDesc}
                       </Typography>
                     </Box>
                   );
@@ -328,7 +335,7 @@ export const ArticleDetails: React.FC<ArticleDetailsProps> = ({
             {article.keywords && article.keywords.length > 0 && (
               <Box>
                 <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-                  High-Priority Syllabus Keywords:
+                  {t('highPriorityKeywords')}
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
                   {article.keywords.map((kw) => (
@@ -367,12 +374,12 @@ export const ArticleDetails: React.FC<ArticleDetailsProps> = ({
               fontWeight: 600,
             }}
           >
-            {isBookmarked ? 'Bookmarked' : 'Save for Revision'}
+            {isBookmarked ? t('saveArticleTooltip') : t('saveArticleTooltip')}
           </Button>
 
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button onClick={onClose} variant="outlined" color="inherit">
-              Close
+              {t('close')}
             </Button>
             <Button
               component="a"
@@ -382,7 +389,7 @@ export const ArticleDetails: React.FC<ArticleDetailsProps> = ({
               variant="contained"
               endIcon={<ExternalLink size={15} />}
             >
-              Open Original Source
+              {t('openOriginalSource')}
             </Button>
           </Box>
         </DialogActions>
@@ -392,7 +399,7 @@ export const ArticleDetails: React.FC<ArticleDetailsProps> = ({
         open={copied}
         autoHideDuration={3000}
         onClose={() => setCopied(false)}
-        message="Article link copied to clipboard!"
+        message={t('shareSuccess')}
       />
     </>
   );

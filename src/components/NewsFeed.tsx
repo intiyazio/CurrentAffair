@@ -21,6 +21,7 @@ import type { CurrentAffair, FilterState, RelevanceFilter, TimeframeFilter } fro
 import { NewsCard } from './NewsCard';
 import { SearchBar } from './SearchBar';
 import { UPSC_CATEGORIES, GS_PAPERS, filterArticles } from '../utils/filterUtils';
+import { useLanguage } from '../context/LanguageContext';
 
 interface NewsFeedProps {
   articles: CurrentAffair[];
@@ -34,8 +35,8 @@ interface NewsFeedProps {
   sourcesList: string[];
 }
 
-interface GSPaperOption {
-  code: string;
+interface SelectOption {
+  value: string;
   label: string;
 }
 
@@ -59,51 +60,64 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
 }) => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const { t, translateCategory, translateGSPaper, translateGSPaperDesc, translateSource } = useLanguage();
   const [displayCount, setDisplayCount] = useState<number>(PAGE_SIZE);
 
   // 1. Category Options
-  const categoryOptions = useMemo(() => {
-    return ['All Categories', ...UPSC_CATEGORIES];
-  }, []);
-
-  const selectedCategoryValue =
-    filters.category === 'All' ? 'All Categories' : filters.category;
-
-  // 2. GS Paper Options
-  const gsPaperOptions: GSPaperOption[] = useMemo(() => {
+  const categoryOptions: SelectOption[] = useMemo(() => {
     return [
-      { code: 'All', label: 'All GS Papers' },
-      ...GS_PAPERS.map((p) => ({
-        code: p.code,
-        label: `${p.code} – ${p.shortDesc.split(',')[0].trim()}`,
+      { value: 'All', label: t('allCategories') },
+      ...UPSC_CATEGORIES.map((cat) => ({
+        value: cat,
+        label: translateCategory(cat),
       })),
     ];
-  }, []);
+  }, [t, translateCategory]);
+
+  const selectedCategoryOption =
+    categoryOptions.find((c) => c.value === filters.category) || categoryOptions[0];
+
+  // 2. GS Paper Options
+  const gsPaperOptions: SelectOption[] = useMemo(() => {
+    return [
+      { value: 'All', label: t('showAllPapers') },
+      ...GS_PAPERS.map((p) => ({
+        value: p.code,
+        label: `${translateGSPaper(p.code)} (${translateGSPaperDesc(p.code).split(',')[0].trim() || p.code})`,
+      })),
+    ];
+  }, [t, translateGSPaper, translateGSPaperDesc]);
 
   const selectedGSPaperOption =
-    gsPaperOptions.find((p) => p.code === filters.gsPaper) || gsPaperOptions[0];
+    gsPaperOptions.find((p) => p.value === filters.gsPaper) || gsPaperOptions[0];
 
   // 3. Source Options
-  const sourceOptions = useMemo(() => {
-    return ['All Sources', ...sourcesList];
-  }, [sourcesList]);
+  const sourceOptions: SelectOption[] = useMemo(() => {
+    return [
+      { value: 'All', label: `${t('dropdownSource')} (${t('relevanceAll')})` },
+      ...sourcesList.map((src) => ({
+        value: src,
+        label: translateSource(src),
+      })),
+    ];
+  }, [sourcesList, t, translateSource]);
 
-  const selectedSourceValue =
-    filters.source === 'All' ? 'All Sources' : filters.source;
+  const selectedSourceOption =
+    sourceOptions.find((s) => s.value === filters.source) || sourceOptions[0];
 
   // 4. Timeframe Options
   const timeframeOptions: TimeframeOption[] = useMemo(() => {
     return [
-      { value: 'all', label: 'All Available (30 Days)' },
-      { value: 'today', label: "Today's News Only" },
-      { value: '3days', label: 'Past 3 Days' },
-      { value: '7days', label: 'Past 7 Days' },
-      { value: 'month', label: 'Past 30 Days' },
+      { value: 'all', label: t('timeframeAll') },
+      { value: 'today', label: t('timeframeToday') },
+      { value: '3days', label: t('timeframe3Days') },
+      { value: '7days', label: t('timeframe7Days') },
+      { value: 'month', label: t('timeframeMonth') },
     ];
-  }, []);
+  }, [t]);
 
   const selectedTimeframeOption =
-    timeframeOptions.find((t) => t.value === filters.timeframe) || timeframeOptions[0];
+    timeframeOptions.find((tOpt) => tOpt.value === filters.timeframe) || timeframeOptions[0];
 
   // Filter articles memoized
   const filteredArticles = useMemo(() => {
@@ -144,10 +158,10 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
       {/* Section Title */}
       <Box sx={{ mb: 3.5 }}>
         <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.75 }}>
-          Daily Current Affairs Feed
+          {t('feedTitle')}
         </Typography>
         <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-          Chronological, unedited news stream from verified primary sources mapped with UPSC syllabus tags.
+          {t('feedSubtitle')}
         </Typography>
       </Box>
 
@@ -167,7 +181,7 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
           <SearchBar
             value={filters.searchQuery}
             onChange={(q) => onFilterChange((prev) => ({ ...prev, searchQuery: q }))}
-            placeholder="Search keywords, headlines, schemes, judicial rulings..."
+            placeholder={t('feedSearchPlaceholder')}
           />
         </Box>
 
@@ -188,21 +202,22 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
             size="small"
             autoHighlight
             options={categoryOptions}
-            value={selectedCategoryValue}
+            getOptionLabel={(option) => option.label}
+            value={selectedCategoryOption}
             onChange={(_event, newValue) => {
               onFilterChange((prev) => ({
                 ...prev,
-                category: !newValue || newValue === 'All Categories' ? 'All' : newValue,
+                category: newValue ? newValue.value : 'All',
               }));
             }}
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="UPSC Category"
-                placeholder="Type to search category..."
+                label={t('dropdownCategory')}
+                placeholder={t('searchCategoryPlaceholder')}
               />
             )}
-            isOptionEqualToValue={(option, value) => option === value}
+            isOptionEqualToValue={(option, value) => option.value === value.value}
           />
 
           {/* 2. GS Paper Autocomplete Searchable Dropdown */}
@@ -215,17 +230,17 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
             onChange={(_event, newValue) => {
               onFilterChange((prev) => ({
                 ...prev,
-                gsPaper: newValue ? newValue.code : 'All',
+                gsPaper: newValue ? newValue.value : 'All',
               }));
             }}
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="GS Paper"
-                placeholder="Type to search paper..."
+                label={t('dropdownGSPaper')}
+                placeholder={t('searchGSPaperPlaceholder')}
               />
             )}
-            isOptionEqualToValue={(option, value) => option.code === value.code}
+            isOptionEqualToValue={(option, value) => option.value === value.value}
           />
 
           {/* 3. Source Autocomplete Searchable Dropdown */}
@@ -233,21 +248,22 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
             size="small"
             autoHighlight
             options={sourceOptions}
-            value={selectedSourceValue}
+            getOptionLabel={(option) => option.label}
+            value={selectedSourceOption}
             onChange={(_event, newValue) => {
               onFilterChange((prev) => ({
                 ...prev,
-                source: !newValue || newValue === 'All Sources' ? 'All' : newValue,
+                source: newValue ? newValue.value : 'All',
               }));
             }}
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="News Source"
-                placeholder="Type to search source..."
+                label={t('dropdownSource')}
+                placeholder={t('searchSourcePlaceholder')}
               />
             )}
-            isOptionEqualToValue={(option, value) => option === value}
+            isOptionEqualToValue={(option, value) => option.value === value.value}
           />
 
           {/* 4. Timeframe Autocomplete Searchable Dropdown */}
@@ -266,8 +282,8 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Timeframe"
-                placeholder="Type to search timeframe..."
+                label={t('dropdownTimeframe')}
+                placeholder={t('searchTimeframePlaceholder')}
               />
             )}
             isOptionEqualToValue={(option, value) => option.value === value.value}
@@ -289,7 +305,7 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
           {/* Prelims vs Mains Toggle */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
             <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>
-              Relevance:
+              {t('relevanceLabel')}
             </Typography>
             <ToggleButtonGroup
               size="small"
@@ -306,9 +322,9 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
                 },
               }}
             >
-              <ToggleButton value="all">All Stages</ToggleButton>
-              <ToggleButton value="prelims">Prelims High-Yield</ToggleButton>
-              <ToggleButton value="mains">Mains Analytical</ToggleButton>
+              <ToggleButton value="all">{t('relevanceAll')}</ToggleButton>
+              <ToggleButton value="prelims">{t('relevancePrelims')}</ToggleButton>
+              <ToggleButton value="mains">{t('relevanceMains')}</ToggleButton>
             </ToggleButtonGroup>
           </Box>
 
@@ -325,7 +341,7 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
                 alignSelf: { xs: 'flex-start', sm: 'center' },
               }}
             >
-              Reset All Filters
+              {t('resetFilters')}
             </Button>
           )}
         </Box>
@@ -343,21 +359,21 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
         }}
       >
         <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary' }}>
-          Showing{' '}
+          {t('showingPrefix')}{' '}
           <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
             {visibleArticles.length}
           </Box>{' '}
-          of{' '}
+          {t('showingOf')}{' '}
           <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
             {filteredArticles.length}
           </Box>{' '}
-          articles
-          {isFiltered && ' (filtered)'}
+          {t('showingArticles')}
+          {isFiltered && ` ${t('filteredSuffix')}`}
         </Typography>
 
         {filters.category !== 'All' && (
           <Chip
-            label={`Category: ${filters.category}`}
+            label={`${t('dropdownCategory')}: ${translateCategory(filters.category)}`}
             size="small"
             onDelete={() => onFilterChange((prev) => ({ ...prev, category: 'All' }))}
             sx={{ fontWeight: 600 }}
@@ -366,7 +382,7 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
 
         {filters.gsPaper !== 'All' && (
           <Chip
-            label={`Paper: ${filters.gsPaper}`}
+            label={`${t('dropdownGSPaper')}: ${translateGSPaper(filters.gsPaper)}`}
             size="small"
             onDelete={() => onFilterChange((prev) => ({ ...prev, gsPaper: 'All' }))}
             sx={{ fontWeight: 600 }}
@@ -375,7 +391,7 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
 
         {filters.source !== 'All' && (
           <Chip
-            label={`Source: ${filters.source}`}
+            label={`${t('dropdownSource')}: ${translateSource(filters.source)}`}
             size="small"
             onDelete={() => onFilterChange((prev) => ({ ...prev, source: 'All' }))}
             sx={{ fontWeight: 600 }}
@@ -436,14 +452,13 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
             <AlertCircle size={24} />
           </Box>
           <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-            No Articles Found
+            {t('noArticlesFound')}
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3, maxWidth: 460, mx: 'auto' }}>
-            No current affairs matched your active search query and filter criteria. Try clearing
-            filters or adjusting your search term.
+            {t('noArticlesDesc')}
           </Typography>
           <Button variant="outlined" onClick={onResetFilters}>
-            Clear All Filters
+            {t('clearAllFilters')}
           </Button>
         </Paper>
       )}
@@ -490,7 +505,7 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({
               },
             }}
           >
-            Load More Articles ({filteredArticles.length - displayCount} remaining)
+            {t('loadMore')} ({filteredArticles.length - displayCount} {t('remainingSuffix')})
           </Button>
         </Box>
       )}

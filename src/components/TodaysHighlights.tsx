@@ -7,6 +7,7 @@ import {
 import { Sparkles, ArrowRight } from 'lucide-react';
 import type { CurrentAffair } from '../types/news';
 import { NewsCard } from './NewsCard';
+import { useLanguage } from '../context/LanguageContext';
 
 interface TodaysHighlightsProps {
   articles: CurrentAffair[];
@@ -23,6 +24,8 @@ export const TodaysHighlights: React.FC<TodaysHighlightsProps> = ({
   onSelectArticle,
   onViewAllClick,
 }) => {
+  const { t } = useLanguage();
+
   // Pick top 6 recent high-yield articles (latest first)
   const highlightArticles = React.useMemo(() => {
     return articles.slice(0, 6);
@@ -47,11 +50,11 @@ export const TodaysHighlights: React.FC<TodaysHighlightsProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#01484a', mb: 0.5 }}>
             <Sparkles size={20} color="#d97706" />
             <Typography variant="h4" sx={{ fontWeight: 800 }}>
-              Today's Important News
+              {t('highlightsTitle')}
             </Typography>
           </Box>
           <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-            Latest verified developments published by official government bodies and leading national newspapers.
+            {t('highlightsSubtitle')}
           </Typography>
         </Box>
 
@@ -65,7 +68,7 @@ export const TodaysHighlights: React.FC<TodaysHighlightsProps> = ({
             color: '#01484a',
           }}
         >
-          View All {articles.length} Articles
+          {t('viewAllButton')} ({articles.length})
         </Button>
       </Box>
 

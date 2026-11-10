@@ -6,7 +6,9 @@
 export interface CurrentAffair {
   id: string;
   title: string;
+  titleHi?: string;
   description: string;
+  descriptionHi?: string;
   source: string;
   sourceUrl: string;
   publishedAt: string;

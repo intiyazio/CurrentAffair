@@ -10,6 +10,7 @@ import {
 import { Layers, CheckCircle2 } from 'lucide-react';
 import { GS_PAPERS } from '../utils/filterUtils';
 import type { CurrentAffair } from '../types/news';
+import { useLanguage } from '../context/LanguageContext';
 
 interface GSPaperFiltersProps {
   selectedPaper: string;
@@ -24,6 +25,7 @@ export const GSPaperFilters: React.FC<GSPaperFiltersProps> = ({
 }) => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const { t, translateGSPaper, translateGSPaperDesc } = useLanguage();
 
   // Compute paper counts
   const paperCounts = React.useMemo(() => {
@@ -60,10 +62,10 @@ export const GSPaperFilters: React.FC<GSPaperFiltersProps> = ({
       >
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
-            General Studies (GS) Paper Mapping
+            {t('gsPaperTitle')}
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Direct syllabus correlation for UPSC Civil Services Mains Examination.
+            {t('gsPaperSubtitle')}
           </Typography>
         </Box>
 
@@ -75,7 +77,7 @@ export const GSPaperFilters: React.FC<GSPaperFiltersProps> = ({
             startIcon={<Layers size={14} />}
             sx={{ alignSelf: { xs: 'flex-start', sm: 'center' } }}
           >
-            Show All Papers
+            {t('showAllPapers')}
           </Button>
         )}
       </Box>
@@ -142,11 +144,11 @@ export const GSPaperFilters: React.FC<GSPaperFiltersProps> = ({
                       letterSpacing: '-0.01em',
                     }}
                   >
-                    {paper.code}
+                    {translateGSPaper(paper.code)}
                   </Typography>
 
                   <Chip
-                    label={`${count} items`}
+                    label={`${count} ${t('itemsCount')}`}
                     size="small"
                     sx={{
                       height: 22,
@@ -168,7 +170,7 @@ export const GSPaperFilters: React.FC<GSPaperFiltersProps> = ({
                     mb: 1.5,
                   }}
                 >
-                  {paper.shortDesc}
+                  {translateGSPaperDesc(paper.code) || paper.shortDesc}
                 </Typography>
               </Box>
 
@@ -188,10 +190,10 @@ export const GSPaperFilters: React.FC<GSPaperFiltersProps> = ({
                 {isSelected ? (
                   <>
                     <CheckCircle2 size={14} />
-                    <span>Active Filter</span>
+                    <span>{t('activeFilter')}</span>
                   </>
                 ) : (
-                  <span>Click to Filter</span>
+                  <span>{t('clickToFilter')}</span>
                 )}
               </Box>
             </Paper>

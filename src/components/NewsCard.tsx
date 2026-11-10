@@ -18,8 +18,9 @@ import {
   Building2,
 } from 'lucide-react';
 import type { CurrentAffair } from '../types/news';
-import { formatArticleDateShort, formatRelativeTime } from '../utils/dateUtils';
+import { formatArticleDateShort, formatRelativeTime, safeParseDate } from '../utils/dateUtils';
 import { GS_PAPERS } from '../utils/filterUtils';
+import { useLanguage } from '../context/LanguageContext';
 
 interface NewsCardProps {
   article: CurrentAffair;
@@ -36,9 +37,27 @@ export const NewsCard: React.FC<NewsCardProps> = ({
 }) => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const { language, t, translateCategory, translateGSPaper, translateSource } = useLanguage();
+
+  const getRelativeTimeFormatted = (dateStr: string) => {
+    if (!dateStr) return '';
+    const d = safeParseDate(dateStr);
+    const diffHours = Math.round((new Date().getTime() - d.getTime()) / (1000 * 60 * 60));
+    if (language === 'hi') {
+      if (diffHours <= 0) return 'अभी-अभी';
+      if (diffHours === 1) return '1 घंटे पहले';
+      if (diffHours < 24) return `${diffHours} घंटे पहले`;
+      const diffDays = Math.round(diffHours / 24);
+      return `${diffDays} दिन पहले`;
+    }
+    return formatRelativeTime(dateStr);
+  };
 
   const dateShort = formatArticleDateShort(article.publishedAt);
-  const relativeTime = formatRelativeTime(article.publishedAt);
+  const relativeTime = getRelativeTimeFormatted(article.publishedAt);
+
+  const displayTitle = (language === 'hi' && article.titleHi) ? article.titleHi : article.title;
+  const displayDescription = (language === 'hi' && article.descriptionHi) ? article.descriptionHi : article.description;
 
   const getGSPaperColor = (paperCode: string) => {
     const match = GS_PAPERS.find((p) => p.code === paperCode);
@@ -96,12 +115,12 @@ export const NewsCard: React.FC<NewsCardProps> = ({
                 fontSize: '0.72rem',
               }}
             >
-              {article.source}
+              {translateSource(article.source)}
             </Typography>
           </Box>
 
           {/* Bookmark Button */}
-          <Tooltip title={isBookmarked ? 'Remove Bookmark' : 'Save for Revision'}>
+          <Tooltip title={isBookmarked ? t('removeBookmarkTooltip') : t('saveArticleTooltip')}>
             <IconButton
               size="small"
               onClick={(e) => {
@@ -116,7 +135,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({
                   backgroundColor: 'rgba(1, 72, 74, 0.06)',
                 },
               }}
-              aria-label={isBookmarked ? 'Saved to bookmarks' : 'Save article'}
+              aria-label={isBookmarked ? t('removeBookmarkTooltip') : t('saveArticleTooltip')}
             >
               {isBookmarked ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
             </IconButton>
@@ -140,7 +159,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({
             },
           }}
         >
-          {article.title}
+          {displayTitle}
         </Typography>
 
         {/* Short Description */}
@@ -157,14 +176,14 @@ export const NewsCard: React.FC<NewsCardProps> = ({
             overflow: 'hidden',
           }}
         >
-          {article.description}
+          {displayDescription}
         </Typography>
 
         {/* UPSC Meta Tags: GS Papers & Category */}
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1.75 }}>
           {/* Category Chip */}
           <Chip
-            label={article.category}
+            label={translateCategory(article.category)}
             size="small"
             sx={{
               backgroundColor: isLight ? 'rgba(1, 72, 74, 0.08)' : 'rgba(45, 212, 191, 0.12)',
@@ -179,7 +198,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({
           {article.gsPaper.map((paper) => (
             <Chip
               key={paper}
-              label={paper}
+              label={translateGSPaper(paper)}
               size="small"
               sx={{
                 border: `1px solid ${getGSPaperColor(paper)}33`,
@@ -195,7 +214,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({
           {/* Prelims & Mains Pills */}
           {article.prelimsRelevant && (
             <Chip
-              label="Prelims"
+              label={t('prelimsBadge')}
               size="small"
               variant="outlined"
               sx={{
@@ -210,7 +229,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({
 
           {article.mainsRelevant && (
             <Chip
-              label="Mains"
+              label={t('mainsBadge')}
               size="small"
               variant="outlined"
               sx={{
@@ -254,10 +273,10 @@ export const NewsCard: React.FC<NewsCardProps> = ({
                 minWidth: 'auto',
               }}
             >
-              UPSC Notes
+              {t('upscNotesButton')}
             </Button>
 
-            <Tooltip title="Read original verified report at source portal">
+            <Tooltip title={t('openOriginalSource')}>
               <Button
                 component="a"
                 href={article.sourceUrl}
@@ -277,7 +296,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({
                   },
                 }}
               >
-                Source
+                {t('sourceButton')}
               </Button>
             </Tooltip>
           </Box>

@@ -464,7 +464,7 @@ def fetch_pib_releases() -> list:
 
         # Also scrape latest English releases from PIB portal if RSS returns few items
         if len(articles) < 5:
-            portal_url = "https://www.pib.gov.in/indexd.aspx"
+            portal_url = "https://www.pib.gov.in/index.aspx"
             p_resp = SESSION.get(portal_url, timeout=10, verify=False)
             if p_resp.status_code == 200:
                 soup = BeautifulSoup(p_resp.text, "html.parser")
@@ -479,7 +479,9 @@ def fetch_pib_releases() -> list:
                     published_at = datetime.now(timezone.utc).isoformat()
                     clean_desc = f"{title}. Official communique from the Government of India via Press Information Bureau."
                     classification = classify_upsc(title, clean_desc, feed_hint="National Affairs")
-                    articles.append({
+                    
+                    is_devanagari = any('\u0900' <= c <= '\u097F' for c in title)
+                    article_entry = {
                         "id": generate_article_id(norm_link, title, published_at),
                         "title": title,
                         "description": clean_desc,
@@ -491,7 +493,11 @@ def fetch_pib_releases() -> list:
                         "prelimsRelevant": classification["prelimsRelevant"],
                         "mainsRelevant": classification["mainsRelevant"],
                         "keywords": classification["keywords"],
-                    })
+                    }
+                    if is_devanagari:
+                        article_entry["titleHi"] = title
+                        article_entry["descriptionHi"] = clean_desc
+                    articles.append(article_entry)
 
         logger.info(f"Collected {len(articles)} releases from PIB")
     except Exception as exc:

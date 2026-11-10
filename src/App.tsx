@@ -2,13 +2,15 @@ import { useState, useEffect, useMemo } from 'react';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { getAppTheme } from './theme/theme';
 import { HomePage } from './pages/HomePage';
+import { LanguageProvider } from './context/LanguageContext';
 
 export function App() {
+  // Default theme is strictly 'light' as requested
   const [mode, setMode] = useState<'light' | 'dark'>(() => {
     try {
       const saved = localStorage.getItem('upsc_theme_mode');
       if (saved === 'dark' || saved === 'light') return saved;
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      return 'light'; // Strict light mode default
     } catch {
       return 'light';
     }
@@ -29,10 +31,12 @@ export function App() {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <HomePage mode={mode} onToggleTheme={toggleTheme} />
-    </ThemeProvider>
+    <LanguageProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <HomePage mode={mode} onToggleTheme={toggleTheme} />
+      </ThemeProvider>
+    </LanguageProvider>
   );
 }
 

@@ -21,7 +21,8 @@ import {
   AlertTriangle,
   Sparkles,
 } from 'lucide-react';
-import { formatTodayHeadline, formatRelativeTime, formatArticleDate } from '../utils/dateUtils';
+import { formatTodayHeadline, formatRelativeTime, formatArticleDate, safeParseDate } from '../utils/dateUtils';
+import { useLanguage } from '../context/LanguageContext';
 
 interface HeroProps {
   searchQuery: string;
@@ -42,12 +43,43 @@ export const Hero: React.FC<HeroProps> = ({
 }) => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const { language, t, translateCategory } = useLanguage();
 
-  const todayStr = formatTodayHeadline();
-  const updatedRelative = lastUpdated ? formatRelativeTime(lastUpdated) : 'Fetching...';
+  const getTodayHeadlineFormatted = () => {
+    if (language === 'hi') {
+      try {
+        return new Date().toLocaleDateString('hi-IN', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+      } catch {
+        return formatTodayHeadline();
+      }
+    }
+    return formatTodayHeadline();
+  };
+
+  const getRelativeTimeFormatted = (dateStr: string) => {
+    if (!dateStr) return '';
+    const d = safeParseDate(dateStr);
+    const diffHours = Math.round((new Date().getTime() - d.getTime()) / (1000 * 60 * 60));
+    if (language === 'hi') {
+      if (diffHours <= 0) return 'अभी-अभी';
+      if (diffHours === 1) return '1 घंटे पहले';
+      if (diffHours < 24) return `${diffHours} घंटे पहले`;
+      const diffDays = Math.round(diffHours / 24);
+      return `${diffDays} दिन पहले`;
+    }
+    return formatRelativeTime(dateStr);
+  };
+
+  const todayStr = getTodayHeadlineFormatted();
+  const updatedRelative = lastUpdated ? getRelativeTimeFormatted(lastUpdated) : '...';
   const updatedExact = lastUpdated ? formatArticleDate(lastUpdated) : '';
 
-  const quickPills = [
+  const quickPillKeys = [
     'Economy',
     'Indian Polity',
     'Environment & Ecology',
@@ -75,9 +107,7 @@ export const Hero: React.FC<HeroProps> = ({
             icon={<AlertTriangle size={20} />}
             sx={{ mb: 4, borderRadius: 2 }}
           >
-            <strong>Note on Data Freshness:</strong> The current affairs data was last updated over
-            24 hours ago ({updatedExact}). The next automated GitHub Actions cycle will refresh the feed
-            shortly.
+            <strong>{t('staleWarningTitle')}</strong> {t('staleWarningDesc')} ({updatedExact})
           </Alert>
         )}
 
@@ -107,7 +137,7 @@ export const Hero: React.FC<HeroProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
               <Clock size={14} color="#059669" />
               <Typography variant="caption" sx={{ fontWeight: 500, color: 'text.secondary' }}>
-                Updated {updatedRelative}
+                {t('updatedPrefix')} {updatedRelative}
               </Typography>
             </Box>
           </Box>
@@ -124,7 +154,7 @@ export const Hero: React.FC<HeroProps> = ({
               color: isLight ? '#01484a' : '#2dd4bf',
             }}
           >
-            Stay Updated. Stay Ahead.
+            {t('heroTitle')}
           </Typography>
 
           {/* Subtitle */}
@@ -137,12 +167,11 @@ export const Hero: React.FC<HeroProps> = ({
               fontSize: { xs: '1rem', sm: '1.2rem' },
               lineHeight: 1.6,
               mb: 4,
-              maxWidth: 680,
+              maxWidth: 720,
               mx: 'auto',
             }}
           >
-            Daily Indian current affairs curated from official government portals and trusted primary
-            sources, mapped specifically to the UPSC Civil Services Examination.
+            {t('heroSubtitle')}
           </Typography>
 
           {/* Search Box */}
@@ -164,7 +193,7 @@ export const Hero: React.FC<HeroProps> = ({
             <TextField
               fullWidth
               variant="standard"
-              placeholder="Search news, government schemes, keywords (e.g. RBI, Supreme Court, COP, GDP)..."
+              placeholder={t('searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               slotProps={{
@@ -200,15 +229,15 @@ export const Hero: React.FC<HeroProps> = ({
             }}
           >
             <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, mr: 0.5 }}>
-              Popular Topics:
+              {t('popularTopics')}
             </Typography>
-            {quickPills.map((pill) => (
+            {quickPillKeys.map((pillKey) => (
               <Chip
-                key={pill}
-                label={pill}
+                key={pillKey}
+                label={translateCategory(pillKey)}
                 size="small"
                 clickable
-                onClick={() => onQuickCategoryClick && onQuickCategoryClick(pill)}
+                onClick={() => onQuickCategoryClick && onQuickCategoryClick(pillKey)}
                 sx={{
                   backgroundColor: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.08)',
                   border: `1px solid ${theme.palette.divider}`,
@@ -244,11 +273,11 @@ export const Hero: React.FC<HeroProps> = ({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#01484a', mb: 0.5 }}>
                 <Database size={17} />
                 <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>
-                  Total Articles
+                  {t('totalArticlesLabel')}
                 </Typography>
               </Box>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                {totalArticles > 0 ? `${totalArticles}+ Verified` : 'Loading...'}
+                {totalArticles > 0 ? `${totalArticles} ${t('totalArticlesSuffix')}` : '...'}
               </Typography>
             </Paper>
 
@@ -264,11 +293,11 @@ export const Hero: React.FC<HeroProps> = ({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#059669', mb: 0.5 }}>
                 <CheckCircle2 size={17} />
                 <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>
-                  Primary Sources
+                  {t('primarySourcesLabel')}
                 </Typography>
               </Box>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                PIB, RBI, PRS & More
+                {t('primarySourcesValue')}
               </Typography>
             </Paper>
 
@@ -284,11 +313,11 @@ export const Hero: React.FC<HeroProps> = ({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#0284c7', mb: 0.5 }}>
                 <Sparkles size={17} />
                 <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>
-                  Syllabus Mapping
+                  {t('syllabusMappingLabel')}
                 </Typography>
               </Box>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                GS I, II, III, IV & Essay
+                {t('syllabusMappingValue')}
               </Typography>
             </Paper>
 
@@ -304,11 +333,11 @@ export const Hero: React.FC<HeroProps> = ({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#d97706', mb: 0.5 }}>
                 <Clock size={17} />
                 <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>
-                  Updates
+                  {t('updateFrequencyLabel')}
                 </Typography>
               </Box>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                Every 6 Hours
+                {t('updateFrequencyValue')}
               </Typography>
             </Paper>
           </Box>

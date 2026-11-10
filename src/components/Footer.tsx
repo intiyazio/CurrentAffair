@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import type { SourceSummary } from '../types/news';
 import { formatArticleDate } from '../utils/dateUtils';
+import { useLanguage } from '../context/LanguageContext';
 
 interface FooterProps {
   lastUpdated: string | null;
@@ -26,6 +27,7 @@ interface FooterProps {
 export const Footer: React.FC<FooterProps> = ({ lastUpdated, sources }) => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const { t, translateSource } = useLanguage();
 
   const activeSourcesCount = sources.filter((s) => s.status === 'active').length;
 
@@ -62,7 +64,7 @@ export const Footer: React.FC<FooterProps> = ({ lastUpdated, sources }) => {
                 <GraduationCap size={22} />
               </Box>
               <Typography variant="h6" sx={{ fontWeight: 800, color: '#ffffff' }}>
-                UPSC Current Affairs
+                {t('brandName')}
               </Typography>
             </Box>
 
@@ -70,16 +72,14 @@ export const Footer: React.FC<FooterProps> = ({ lastUpdated, sources }) => {
               variant="body2"
               sx={{ color: '#94a3b8', lineHeight: 1.7, mb: 2.5, pr: { md: 3 } }}
             >
-              An independent, ad-free educational portal designed to help UPSC Civil Services
-              aspirants track genuine daily developments across Indian Polity, Economy, Environment,
-              Science & Technology, and International Relations.
+              {t('footerAboutDesc')}
             </Typography>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#2dd4bf' }}>
               <Clock size={16} />
               <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                Data Updated: {lastUpdated ? formatArticleDate(lastUpdated) : 'Live Stream Active'}
-                {activeSourcesCount > 0 && ` • (${activeSourcesCount} active feeds)`}
+                {t('footerDataUpdated')} {lastUpdated ? formatArticleDate(lastUpdated) : 'Live'}
+                {activeSourcesCount > 0 && ` • (${activeSourcesCount} ${t('footerActiveFeeds')})`}
               </Typography>
             </Box>
           </Grid>
@@ -87,7 +87,7 @@ export const Footer: React.FC<FooterProps> = ({ lastUpdated, sources }) => {
           {/* Col 2: Primary Data Sources */}
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#ffffff', mb: 2 }}>
-              Monitored Primary Sources
+              {t('footerMonitoredSources')}
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {[
@@ -114,7 +114,7 @@ export const Footer: React.FC<FooterProps> = ({ lastUpdated, sources }) => {
                   }}
                 >
                   <ExternalLink size={12} />
-                  <span>{src.name}</span>
+                  <span>{translateSource(src.name)}</span>
                 </Link>
               ))}
             </Box>
@@ -123,11 +123,10 @@ export const Footer: React.FC<FooterProps> = ({ lastUpdated, sources }) => {
           {/* Col 3: Architecture & Deployment */}
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#ffffff', mb: 2 }}>
-              Open Architecture
+              {t('footerArchitectureTitle')}
             </Typography>
             <Typography variant="body2" sx={{ color: '#94a3b8', lineHeight: 1.6, mb: 2 }}>
-              Zero traditional backend. 100% free serverless architecture powered by GitHub Actions
-              scheduled crawlers and deployed statically on GitHub Pages.
+              {t('footerArchitectureDesc')}
             </Typography>
 
             <Link
@@ -153,7 +152,7 @@ export const Footer: React.FC<FooterProps> = ({ lastUpdated, sources }) => {
               }}
             >
               <Code2 size={16} />
-              <span>GitHub Repository</span>
+              <span>{t('footerGithubRepo')}</span>
             </Link>
           </Grid>
         </Grid>
@@ -173,13 +172,11 @@ export const Footer: React.FC<FooterProps> = ({ lastUpdated, sources }) => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#f59e0b', mb: 0.75 }}>
             <ShieldCheck size={16} />
             <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Educational Disclaimer
+              {t('footerDisclaimerTitle')}
             </Typography>
           </Box>
           <Typography variant="caption" sx={{ display: 'block', color: '#94a3b8', lineHeight: 1.65 }}>
-            This website is an independent educational resource for UPSC aspirants. News and
-            information are collected from publicly available sources. Please refer to the original
-            source for official information and updates.
+            {t('footerDisclaimerText')}
           </Typography>
         </Box>
 
@@ -196,10 +193,10 @@ export const Footer: React.FC<FooterProps> = ({ lastUpdated, sources }) => {
           }}
         >
           <Typography variant="caption">
-            © {new Date().getFullYear()} UPSC Current Affairs. Understand Today. Prepare for Tomorrow.
+            © {new Date().getFullYear()} {t('footerCopyright')}
           </Typography>
           <Typography variant="caption">
-            Production Build • Deployed on GitHub Pages
+            {t('footerProduction')}
           </Typography>
         </Box>
       </Container>
